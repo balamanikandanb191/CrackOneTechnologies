@@ -133,14 +133,20 @@ router.post('/', async (req, res) => {
         // Background Mail Sending
         try {
             // 🔹 Admin Notification
-            await transporter.sendMail({
-                from: `"CrackOne Notifications" <${process.env.SMTP_USER}>`,
-                to: adminEmail,
-                cc: ccList,
-                subject: `🚀 New Inquiry from ${name}`,
-                html: notificationHtml
-            });
-            console.log("📬 Admin notification sent via Zoho");
+            const allAdmins = [adminEmail, ...ccList];
+            for (const emailAddress of allAdmins) {
+                try {
+                    await transporter.sendMail({
+                        from: `"CrackOne Notifications" <${process.env.SMTP_USER}>`,
+                        to: emailAddress,
+                        subject: `🚀 New Inquiry from ${name}`,
+                        html: notificationHtml
+                    });
+                } catch (adminMailErr) {
+                    console.error(`❌ Failed to send admin notification to ${emailAddress}:`, adminMailErr.message);
+                }
+            }
+            console.log(`📬 Admin notifications sent to ${allAdmins.length} recipients via Zoho`);
 
             // 🔹 Client Auto-Reply
             await transporter.sendMail({
