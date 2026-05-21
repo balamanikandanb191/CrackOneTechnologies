@@ -8,6 +8,7 @@ import Services from './pages/Services'
 import Portfolio from './pages/Portfolio'
 import Contact from './pages/Contact'
 import Admin from './pages/Admin'
+import VerifyCertificate from './pages/VerifyCertificate'
 
 function App() {
     return (
@@ -23,6 +24,7 @@ function App() {
                         <Route path="/portfolio" element={<Portfolio />} />
                         <Route path="/contact" element={<Contact />} />
                         <Route path="/admin" element={<Admin />} />
+                        <Route path="/verify" element={<VerifyCertificate />} />
                     </Routes>
                 </main>
                 <Footer />

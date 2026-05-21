@@ -27,6 +27,7 @@ app.use('/api/services', require('./routes/services'));
 app.use('/api/portfolio', require('./routes/portfolio'));
 app.use('/api/testimonials', require('./routes/testimonials'));
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/certificates', require('./routes/certificates'));
 
 app.get('/api/health',(req,res)=>{
     res.json({status:"ok"});

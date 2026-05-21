@@ -6,9 +6,9 @@
 .admin-login-wrapper {
     min-height: calc(100vh - 80px);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: 2rem;
+    padding: 4rem 2rem 2rem;
 }
 
 .admin-login-card {
@@ -56,6 +56,46 @@
     color: #64748b;
     font-size: 0.85rem;
     margin-top: 1.5rem;
+}
+
+.admin-login-card .input-group,
+.dashboard-section .input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.admin-login-card .input-group label,
+.dashboard-section .input-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.admin-login-card .input-group input,
+.dashboard-section .input-group input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+    background: var(--white);
+    box-sizing: border-box;
+    text-align: left;
+}
+
+.admin-login-card .input-group input:focus,
+.dashboard-section .input-group input:focus {
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .admin-container {

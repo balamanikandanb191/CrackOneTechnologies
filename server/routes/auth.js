@@ -2,11 +2,10 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
+const db = require('../config/db');
+const { GetCommand, PutCommand } = require('@aws-sdk/lib-dynamodb');
 
-// Demo users (in production, use database)
-const users = [
-    { id: 1, name: 'Admin', email: 'admin@crackone.com', password: '$2a$10$XQxBBo8LxOqvOMvzFHVGcuUxKKmJq8G.3MH5KrVWw1xkqGVF8RHXS', role: 'admin' } // password: admin123
-];
+const TABLE_NAME = "clientproject-users";
 
 // Login
 router.post('/login', async (req, res) => {
@@ -16,11 +15,22 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Email and password required' });
         }
 
-        const user = users.find(u => u.email === email);
+        const { Item } = await db.send(new GetCommand({
+            TableName: TABLE_NAME,
+            Key: { userId: email }
+        }));
 
-        // For demo, accept any credentials
+        if (!Item) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+
+        const isMatch = await bcrypt.compare(password, Item.password);
+        if (!isMatch) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+
         const token = jwt.sign(
-            { id: user?.id || 1, email: email, role: 'admin' },
+            { email: Item.email, role: Item.role },
             process.env.JWT_SECRET || 'demo_secret_key',
             { expiresIn: '24h' }
         );
@@ -28,9 +38,10 @@ router.post('/login', async (req, res) => {
         res.json({
             success: true,
             message: 'Login successful',
-            data: { token, user: { id: 1, name: 'Admin', email, role: 'admin' } }
+            data: { token, user: { name: Item.name, email: Item.email, role: Item.role } }
         });
     } catch (error) {
+        console.error("Login error:", error);
         res.status(500).json({ success: false, error: 'Login failed' });
     }
 });
@@ -43,12 +54,33 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ success: false, error: 'All fields required' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = { id: users.length + 1, name, email, password: hashedPassword, role: 'user' };
-        users.push(newUser);
+        // Check if user exists
+        const { Item } = await db.send(new GetCommand({
+            TableName: TABLE_NAME,
+            Key: { userId: email }
+        }));
 
-        res.status(201).json({ success: true, message: 'User registered successfully' });
+        if (Item) {
+            return res.status(400).json({ success: false, error: 'User already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        await db.send(new PutCommand({
+            TableName: TABLE_NAME,
+            Item: {
+                userId: email,
+                email: email,
+                name,
+                password: hashedPassword,
+                role: 'admin', // By default, new users here will be admin for simplicity
+                createdAt: new Date().toISOString()
+            }
+        }));
+
+        res.status(201).json({ success: true, message: 'User registered successfully. You can now login.' });
     } catch (error) {
+        console.error("Register error:", error);
         res.status(500).json({ success: false, error: 'Registration failed' });
     }
 });

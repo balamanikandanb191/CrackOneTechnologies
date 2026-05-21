@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const nodemailer = require('nodemailer');
-const { PutCommand } = require("@aws-sdk/lib-dynamodb");
+const { PutCommand, ScanCommand, DeleteCommand } = require("@aws-sdk/lib-dynamodb");
 
 // Configure Nodemailer with Zoho SMTP
 const smtpHost = (process.env.SMTP_HOST || 'smtp.zoho.in').trim();
@@ -170,6 +170,38 @@ router.post('/', async (req, res) => {
                 details: err.message 
             });
         }
+    }
+});
+
+// ✅ GET All Contacts (For Admin Dashboard)
+router.get('/', async (req, res) => {
+    try {
+        const { Items } = await db.send(new ScanCommand({
+            TableName: "clientproject-contacts"
+        }));
+        // Sort by newest first
+        const sortedItems = (Items || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        res.json({ success: true, data: sortedItems });
+    } catch (error) {
+        console.error("❌ Error fetching contacts:", error);
+        res.status(500).json({ success: false, message: "Error fetching contacts" });
+    }
+});
+
+// ✅ DELETE Contact (For Admin Dashboard)
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await db.send(new DeleteCommand({
+            TableName: "clientproject-contacts",
+            Key: {
+                contactId: id
+            }
+        }));
+        res.json({ success: true, message: "Contact deleted successfully" });
+    } catch (error) {
+        console.error("❌ Error deleting contact:", error);
+        res.status(500).json({ success: false, message: "Error deleting contact" });
     }
 });
 
